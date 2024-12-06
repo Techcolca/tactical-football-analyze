@@ -15,6 +15,8 @@ import {
   Paper,
   ButtonGroup,
   Button,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import {
   SportsSoccer,
@@ -30,6 +32,10 @@ import {
   LineStyle,
   ArrowForward,
   Palette,
+  Clear,
+  RadioButtonUnchecked,
+  CropSquare,
+  BackspaceOutlined,
 } from '@mui/icons-material';
 
 export interface Formation {
@@ -43,17 +49,18 @@ export interface Formation {
 
 interface ToolbarControlsProps {
   onFormationSelect: (formation: string) => void;
-  onToolSelect: (tool: string) => void;
+  onToolSelect: (tool: string | null) => void;
   onColorSelect: (color: string) => void;
   onLineStyleSelect: (style: 'solid' | 'dashed') => void;
   onSaveFormation: () => void;
   onLoadFormation: () => void;
   onUndo: () => void;
   onRedo: () => void;
-  onClear: () => void;
-  selectedTool: string;
+  onClearDrawings: () => void;
+  selectedTool: string | null;
   selectedColor: string;
   selectedLineStyle: 'solid' | 'dashed';
+  currentFormation?: string;
 }
 
 const COLORS = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffffff', '#000000'];
@@ -67,12 +74,27 @@ const ToolbarControls: React.FC<ToolbarControlsProps> = ({
   onLoadFormation,
   onUndo,
   onRedo,
-  onClear,
+  onClearDrawings,
   selectedTool,
   selectedColor,
   selectedLineStyle,
+  currentFormation = '4-4-2',
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+
+  const handleFormationClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleFormationClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleFormationSelect = (formation: string) => {
+    onFormationSelect(formation);
+    handleFormationClose();
+  };
 
   const drawingTools = [
     { icon: <ArrowForward />, name: 'arrow', label: 'Flecha' },
@@ -80,6 +102,9 @@ const ToolbarControls: React.FC<ToolbarControlsProps> = ({
     { icon: <LineStyle />, name: 'dottedLine', label: 'Línea Punteada' },
     { icon: <Square />, name: 'cone', label: 'Cono' },
     { icon: <Circle />, name: 'circle', label: 'Círculo' },
+    { icon: <RadioButtonUnchecked />, name: 'circle', label: 'Círculo' },
+    { icon: <CropSquare />, name: 'square', label: 'Cuadrado' },
+    { icon: <BackspaceOutlined />, name: 'eraser', label: 'Borrador' },
   ];
 
   const formations = [
@@ -88,6 +113,16 @@ const ToolbarControls: React.FC<ToolbarControlsProps> = ({
     { name: '3-5-2', label: '3-5-2' },
     { name: '4-2-3-1', label: '4-2-3-1' },
     { name: '5-3-2', label: '5-3-2' },
+  ];
+
+  const tools = [
+    { name: 'line', icon: <Timeline />, tooltip: 'Línea' },
+    { name: 'arrow', icon: <ArrowForward />, tooltip: 'Flecha' },
+    { name: 'dottedLine', icon: <Create />, tooltip: 'Línea Punteada' },
+    { name: 'cone', icon: <Square />, tooltip: 'Cono' },
+    { name: 'circle', icon: <Circle />, tooltip: 'Círculo' },
+    { name: 'square', icon: <CropSquare />, tooltip: 'Cuadrado' },
+    { name: 'eraser', icon: <BackspaceOutlined />, tooltip: 'Borrador' },
   ];
 
   return (
@@ -200,7 +235,7 @@ const ToolbarControls: React.FC<ToolbarControlsProps> = ({
           <SpeedDialAction
             icon={<Delete />}
             tooltipTitle="Limpiar Todo"
-            onClick={onClear}
+            onClick={onClearDrawings}
           />
         </SpeedDial>
       </Box>
@@ -227,6 +262,69 @@ const ToolbarControls: React.FC<ToolbarControlsProps> = ({
             <Redo />
           </IconButton>
         </Tooltip>
+      </Paper>
+
+      <Paper
+        sx={{
+          position: 'fixed',
+          top: '50%',
+          right: 16,
+          transform: 'translateY(-50%)',
+          p: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1,
+        }}
+      >
+        <Tooltip title="Formación" placement="left">
+          <IconButton onClick={handleFormationClick}>
+            <SportsSoccer />
+          </IconButton>
+        </Tooltip>
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleFormationClose}
+        >
+          {formations.map((formation) => (
+            <MenuItem
+              key={formation.name}
+              onClick={() => handleFormationSelect(formation.name)}
+              selected={formation.name === currentFormation}
+            >
+              {formation.label}
+            </MenuItem>
+          ))}
+        </Menu>
+
+        {tools.map((tool) => (
+          <Tooltip key={tool.name} title={tool.tooltip} placement="left">
+            <IconButton
+              color={selectedTool === tool.name ? 'primary' : 'default'}
+              onClick={() => onToolSelect(tool.name)}
+            >
+              {tool.icon}
+            </IconButton>
+          </Tooltip>
+        ))}
+        
+        <Tooltip title="Borrar Todo" placement="left">
+          <IconButton
+            onClick={onClearDrawings}
+            data-testid="clear-button"
+            sx={{ color: 'error.main' }}
+          >
+            <Delete />
+          </IconButton>
+        </Tooltip>
+
+        {selectedTool && (
+          <Tooltip title="Cancelar dibujo" placement="left">
+            <IconButton onClick={() => onToolSelect(null)}>
+              <Clear />
+            </IconButton>
+          </Tooltip>
+        )}
       </Paper>
     </>
   );

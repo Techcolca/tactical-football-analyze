@@ -13,10 +13,10 @@ export interface DrawingElement {
 }
 
 interface DrawingToolsProps {
-  elements: DrawingElement[];
+  elements?: DrawingElement[];
 }
 
-const DrawingTools: React.FC<DrawingToolsProps> = ({ elements }) => {
+const DrawingTools: React.FC<DrawingToolsProps> = ({ elements = [] }) => {
   const renderElement = (element: DrawingElement) => {
     switch (element.type) {
       case 'arrow':

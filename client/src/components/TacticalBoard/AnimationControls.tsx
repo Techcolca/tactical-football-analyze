@@ -2,18 +2,18 @@ import React from 'react';
 import {
   Box,
   IconButton,
-  Paper,
   Tooltip,
   Slider,
-  Typography,
+  Paper,
 } from '@mui/material';
 import {
   PlayArrow,
   Pause,
   Stop,
-  Speed,
-  Save,
   FiberManualRecord,
+  Save,
+  Upload,
+  Speed
 } from '@mui/icons-material';
 
 interface AnimationControlsProps {
@@ -26,6 +26,7 @@ interface AnimationControlsProps {
   onStop: () => void;
   onSpeedChange: (speed: number) => void;
   onSaveAnimation: () => void;
+  onLoadAnimation: () => void;
 }
 
 const AnimationControls: React.FC<AnimationControlsProps> = ({
@@ -38,72 +39,92 @@ const AnimationControls: React.FC<AnimationControlsProps> = ({
   onStop,
   onSpeedChange,
   onSaveAnimation,
+  onLoadAnimation,
 }) => {
   return (
     <Paper
+      elevation={3}
       sx={{
         position: 'fixed',
-        bottom: 16,
+        bottom: 20,
         left: '50%',
         transform: 'translateX(-50%)',
-        p: 1,
+        bgcolor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 2,
+        padding: 2,
         display: 'flex',
         alignItems: 'center',
         gap: 1,
-        bgcolor: 'rgba(0, 0, 0, 0.8)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(0, 0, 0, 0.1)',
+        zIndex: 1000,
       }}
     >
-      <Tooltip title={isRecording ? "Detener Grabación" : "Grabar Movimientos"}>
+      <Tooltip title={isRecording ? "Stop Recording" : "Start Recording"}>
         <IconButton
-          color={isRecording ? "error" : "default"}
           onClick={onRecord}
+          color={isRecording ? "error" : "default"}
+          sx={{ 
+            bgcolor: isRecording ? 'rgba(244, 67, 54, 0.1)' : 'transparent',
+            '&:hover': {
+              bgcolor: isRecording ? 'rgba(244, 67, 54, 0.2)' : 'rgba(0, 0, 0, 0.04)',
+            }
+          }}
         >
           <FiberManualRecord />
         </IconButton>
       </Tooltip>
 
-      <Tooltip title={isPlaying ? "Pausar" : "Reproducir"}>
+      <Tooltip title={isPlaying ? "Pause" : "Play"}>
         <IconButton
           onClick={isPlaying ? onPause : onPlay}
+          color="primary"
+          sx={{ 
+            bgcolor: isPlaying ? 'rgba(33, 150, 243, 0.1)' : 'transparent',
+            '&:hover': {
+              bgcolor: isPlaying ? 'rgba(33, 150, 243, 0.2)' : 'rgba(0, 0, 0, 0.04)',
+            }
+          }}
         >
           {isPlaying ? <Pause /> : <PlayArrow />}
         </IconButton>
       </Tooltip>
 
-      <Tooltip title="Detener">
+      <Tooltip title="Stop">
         <IconButton onClick={onStop}>
           <Stop />
         </IconButton>
       </Tooltip>
 
-      <Box sx={{ width: 150, display: 'flex', alignItems: 'center' }}>
-        <Speed sx={{ mr: 1, color: 'white' }} />
+      <Box sx={{ width: 100, mx: 2, display: 'flex', alignItems: 'center' }}>
+        <Speed sx={{ mr: 1, color: 'action.active' }} />
         <Slider
           value={animationSpeed}
+          onChange={(_, value) => onSpeedChange(value as number)}
           min={0.5}
           max={2}
           step={0.1}
-          onChange={(_, value) => onSpeedChange(value as number)}
+          valueLabelDisplay="auto"
+          valueLabelFormat={(value) => `${value}x`}
           sx={{
+            color: 'primary.main',
             '& .MuiSlider-thumb': {
-              backgroundColor: '#fff',
-            },
-            '& .MuiSlider-track': {
-              backgroundColor: '#fff',
-            },
-            '& .MuiSlider-rail': {
-              backgroundColor: '#666',
+              width: 16,
+              height: 16,
             },
           }}
         />
-        <Typography sx={{ ml: 1, color: 'white', minWidth: 40 }}>
-          {animationSpeed.toFixed(1)}x
-        </Typography>
       </Box>
 
-      <Tooltip title="Guardar Animación">
-        <IconButton onClick={onSaveAnimation}>
+      <Tooltip title="Save Animation">
+        <IconButton onClick={onSaveAnimation} color="primary">
           <Save />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip title="Load Animation">
+        <IconButton onClick={onLoadAnimation} color="primary">
+          <Upload />
         </IconButton>
       </Tooltip>
     </Paper>

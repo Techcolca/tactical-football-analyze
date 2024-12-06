@@ -1,213 +1,171 @@
-import React from 'react';
-import { Group, Rect, Text, Image } from 'react-konva';
-import { motion } from 'framer-motion';
+import React, { useEffect, useRef, useState } from 'react';
+import { Group, Rect, Text, Circle } from 'react-konva';
+import Konva from 'konva';
 
 interface PlayerCardProps {
+  id: string;
   x: number;
   y: number;
-  player: {
-    name: string;
-    number: number;
-    position: string;
-    rating: number;
-    image?: string;
-  };
-  isDragging: boolean;
-  onDragStart: () => void;
-  onDragEnd: () => void;
-  onDragMove: (e: any) => void;
-  selected: boolean;
-  onSelect: () => void;
+  number: number;
+  isDragging?: boolean;
+  isSelected?: boolean;
+  onDragStart?: () => void;
+  onDragEnd?: (event: any) => void;
+  onClick?: () => void;
+  rating?: number;
+  position: string;
 }
 
-const CARD_WIDTH = 60;
-const CARD_HEIGHT = 85;
-
 const PlayerCard: React.FC<PlayerCardProps> = ({
+  id,
   x,
   y,
-  player,
-  isDragging,
+  number,
+  isDragging = false,
+  isSelected = false,
   onDragStart,
   onDragEnd,
-  onDragMove,
-  selected,
-  onSelect,
+  onClick,
+  rating = 80,
+  position,
 }) => {
-  const cardRef = React.useRef<any>(null);
-  const [isHovered, setIsHovered] = React.useState(false);
-
-  React.useEffect(() => {
-    if (cardRef.current) {
-      // Configurar la capa para movimiento más fluido
-      cardRef.current.cache();
-      cardRef.current.getLayer().batchDraw();
-    }
-  }, []);
-
-  // Colores según la calificación del jugador
+  const groupRef = useRef<Konva.Group>(null);
+  const cardWidth = 60;
+  const cardHeight = 80;
+  const cornerRadius = 5;
+  
+  // Colores basados en el rating (estilo FIFA)
   const getCardColor = (rating: number) => {
-    if (rating >= 90) return '#FFDA4F'; // Oro más realista
-    if (rating >= 80) return '#E7E7E7'; // Plata más realista
-    return '#CD7F32'; // Bronce
+    if (rating >= 90) return '#f1bf0f'; // Oro especial
+    if (rating >= 85) return '#f8df24'; // Oro
+    if (rating >= 80) return '#c0c0c0'; // Plata
+    return '#cd7f32'; // Bronce
   };
 
-  const getCardGradient = (rating: number) => {
-    const baseColor = getCardColor(rating);
-    return {
-      fillLinearGradientStartPoint: { x: 0, y: 0 },
-      fillLinearGradientEndPoint: { x: CARD_WIDTH, y: CARD_HEIGHT },
-      fillLinearGradientColorStops: [
-        0, baseColor,
-        0.5, '#FFFFFF',
-        1, baseColor
-      ]
-    };
-  };
+  const cardColor = getCardColor(rating);
+  const shadowColor = isDragging ? 'black' : 'rgba(0,0,0,0.5)';
+  const shadowBlur = isDragging ? 15 : 5;
 
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-    if (cardRef.current) {
-      cardRef.current.moveToTop();
-      cardRef.current.getLayer().batchDraw();
-    }
-  };
+  // Efecto de brillo dinámico
+  const [glowOpacity, setGlowOpacity] = React.useState(0);
+  
+  useEffect(() => {
+    if (!isSelected) return;
+    
+    // Animación de brillo pulsante
+    const anim = new Konva.Animation((frame) => {
+      if (!frame) return;
+      const opacity = Math.abs(Math.sin(frame.time / 1000));
+      setGlowOpacity(opacity * 0.4);
+    });
 
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-  };
+    anim.start();
+    return () => anim.stop();
+  }, [isSelected]);
+
+  // Efecto para animar el movimiento
+  useEffect(() => {
+    if (!groupRef.current) return;
+
+    // Animación suave al mover
+    groupRef.current.to({
+      x: x,
+      y: y,
+      duration: 0.3,
+      easing: Konva.Easings.EaseInOut,
+    });
+  }, [x, y]);
+
+  // Efecto para animar la selección
+  useEffect(() => {
+    if (!groupRef.current) return;
+
+    groupRef.current.to({
+      scaleX: isSelected ? 1.1 : 1,
+      scaleY: isSelected ? 1.1 : 1,
+      duration: 0.2,
+      easing: Konva.Easings.EaseInOut,
+    });
+  }, [isSelected]);
 
   return (
     <Group
-      ref={cardRef}
+      ref={groupRef}
       x={x}
       y={y}
-      width={CARD_WIDTH}
-      height={CARD_HEIGHT}
       draggable
-      onDragStart={(e) => {
-        // Prevenir el comportamiento predeterminado del navegador
-        e.evt.preventDefault();
-        // Mover la tarjeta al frente
-        cardRef.current?.moveToTop();
-        onDragStart();
-      }}
+      onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      onDragMove={onDragMove}
-      opacity={1}
-      onClick={onSelect}
-      onTap={onSelect}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      scale={{
-        x: isDragging ? 1.05 : isHovered || selected ? 1.02 : 1,
-        y: isDragging ? 1.05 : isHovered || selected ? 1.02 : 1
-      }}
-      shadowColor="black"
-      shadowBlur={isDragging ? 15 : isHovered || selected ? 10 : 5}
-      shadowOpacity={0.3}
-      shadowOffsetX={2}
-      shadowOffsetY={2}
-      dragBoundFunc={(pos) => {
-        if (!cardRef.current?.getStage()) return pos;
-        
-        // Añadir un pequeño margen para que la tarjeta no se pegue a los bordes
-        const margin = 5;
-        const x = Math.max(margin, Math.min(pos.x, cardRef.current.getStage().width() - CARD_WIDTH - margin));
-        const y = Math.max(margin, Math.min(pos.y, cardRef.current.getStage().height() - CARD_HEIGHT - margin));
-        return { x, y };
-      }}
+      onClick={onClick}
+      onTap={onClick}
     >
-      {/* Fondo de la tarjeta con gradiente */}
+      {/* Efecto de brillo */}
       <Rect
-        width={CARD_WIDTH}
-        height={CARD_HEIGHT}
-        {...getCardGradient(player.rating)}
-        cornerRadius={5}
-        stroke="#000"
-        strokeWidth={1}
+        width={cardWidth + 10}
+        height={cardHeight + 10}
+        cornerRadius={cornerRadius + 2}
+        fill="transparent"
+        stroke="#fff"
+        strokeWidth={2}
+        shadowColor="#fff"
+        shadowBlur={20}
+        shadowOpacity={glowOpacity}
+        offsetX={(cardWidth + 10) / 2}
+        offsetY={(cardHeight + 10) / 2}
       />
 
-      {/* Marco interior */}
+      {/* Sombra y brillo de la tarjeta */}
       <Rect
-        x={2}
-        y={2}
-        width={CARD_WIDTH - 4}
-        height={CARD_HEIGHT - 4}
-        stroke="#FFFFFF"
-        strokeWidth={1}
-        cornerRadius={4}
+        width={cardWidth}
+        height={cardHeight}
+        cornerRadius={cornerRadius}
+        fill={cardColor}
+        shadowColor={shadowColor}
+        shadowBlur={shadowBlur}
+        shadowOffset={{ x: 2, y: 2 }}
+        shadowOpacity={0.4}
+        stroke={isSelected ? '#2196f3' : cardColor}
+        strokeWidth={2}
+        offsetX={cardWidth / 2}
+        offsetY={cardHeight / 2}
       />
 
-      {/* Número del jugador con fondo */}
-      <Rect
-        x={5}
-        y={5}
-        width={20}
-        height={20}
-        fill="#FFFFFF"
-        cornerRadius={3}
-      />
+      {/* Rating */}
       <Text
-        text={player.number.toString()}
+        text={rating.toString()}
+        fontSize={16}
+        fontStyle="bold"
+        fill="#000"
+        align="center"
+        width={cardWidth}
+        height={20}
+        offsetX={cardWidth / 2}
+        offsetY={cardHeight / 2 + 10}
+      />
+
+      {/* Posición */}
+      <Text
+        text={position}
         fontSize={14}
-        fontStyle="bold"
         fill="#000"
-        x={5}
-        y={7}
-        width={20}
         align="center"
-      />
-
-      {/* Posición del jugador con fondo */}
-      <Rect
-        x={CARD_WIDTH - 25}
-        y={5}
-        width={20}
+        width={cardWidth}
         height={20}
-        fill="#FFFFFF"
-        cornerRadius={3}
-      />
-      <Text
-        text={player.position}
-        fontSize={12}
-        fontStyle="bold"
-        fill="#000"
-        x={CARD_WIDTH - 25}
-        y={7}
-        width={20}
-        align="center"
+        offsetX={cardWidth / 2}
+        offsetY={cardHeight / 2 - 25}
       />
 
-      {/* Rating con fondo */}
-      <Rect
-        x={CARD_WIDTH/2 - 12}
-        y={CARD_HEIGHT - 25}
-        width={24}
-        height={18}
-        fill="#FFFFFF"
-        cornerRadius={3}
-      />
+      {/* Número */}
       <Text
-        text={player.rating.toString()}
-        fontSize={13}
+        text={number.toString()}
+        fontSize={18}
         fontStyle="bold"
         fill="#000"
-        x={CARD_WIDTH/2 - 12}
-        y={CARD_HEIGHT - 23}
-        width={24}
         align="center"
-      />
-
-      {/* Nombre del jugador */}
-      <Text
-        text={player.name}
-        fontSize={9}
-        fontStyle="bold"
-        fill="#000"
-        width={CARD_WIDTH}
-        align="center"
-        y={CARD_HEIGHT/2}
+        width={cardWidth}
+        height={20}
+        offsetX={cardWidth / 2}
+        offsetY={cardHeight / 2 - 5}
       />
     </Group>
   );
