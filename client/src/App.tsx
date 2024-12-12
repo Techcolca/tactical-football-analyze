@@ -1,31 +1,24 @@
 import React from 'react';
 import { 
-  BrowserRouter as Router, 
-  Routes, 
-  Route,
-  createBrowserRouter,
-  RouterProvider,
-  createRoutesFromElements
+  BrowserRouter,
+  Routes,
+  Route
 } from 'react-router-dom';
 import TacticalBoard from './components/TacticalBoard';
 import Layout from './components/Layout';
-
-const router = createBrowserRouter(
-  createRoutesFromElements(
-    <Route element={<Layout />}>
-      <Route path="/" element={<TacticalBoard />} />
-    </Route>
-  ),
-  {
-    future: {
-      v7_startTransition: true,
-      v7_relativeSplatPath: true
-    }
-  }
-);
+import CoachAI from './components/AIAssistant/CoachAI';
 
 const App: React.FC = () => {
-  return <RouterProvider router={router} />;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<TacticalBoard />} />
+          <Route path="/coach" element={<CoachAI />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
 };
 
 export default App;

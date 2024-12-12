@@ -1,43 +1,28 @@
 import express from 'express';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
-import mongoose from 'mongoose';
 import cors from 'cors';
-import helmet from 'helmet';
-import dotenv from 'dotenv';
 
-// Configuración inicial
-dotenv.config();
 const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST']
-  }
-});
+const PORT = 3001;
 
-// Middleware
+// Middleware básico
 app.use(cors());
-app.use(helmet());
 app.use(express.json());
 
-// Conexión a MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/tactical-football')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+// Ruta de prueba
+app.get('/', (req, res) => {
+  console.log('Recibida petición en /');
+  res.json({ message: 'Servidor funcionando' });
+});
 
-// WebSocket
-io.on('connection', (socket) => {
-  console.log('Client connected');
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected');
-  });
+app.get('/health', (req, res) => {
+  console.log('Recibida petición en /health');
+  res.json({ status: 'ok' });
 });
 
 // Iniciar servidor
-const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Servidor iniciado en puerto ${PORT}`);
+  console.log(`Prueba estas URLs:`);
+  console.log(`1. http://localhost:${PORT}`);
+  console.log(`2. http://localhost:${PORT}/health`);
 });
