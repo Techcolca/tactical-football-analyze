@@ -138,6 +138,13 @@ app.post('/api/ai/generate-animation', async (req, res) => {
     }
 });
 
+// Routes
+const formationRoutes = require('./routes/formationRoutes').default;
+app.use('/api/formations', formationRoutes);
+
+const tacticalPlayRoutes = require('./routes/tacticalPlayRoutes').default;
+app.use('/api/tactical-plays', tacticalPlayRoutes);
+
 // Manejador de errores global
 app.use((err, req, res, next) => {
     console.error('❌ Error global:', err);
@@ -159,4 +166,6 @@ app.listen(port, () => {
     console.log('GET  /health');
     console.log('POST /api/ai/tactical-analysis');
     console.log('POST /api/ai/generate-animation');
+    console.log('GET  /api/formations');
+    console.log('GET  /api/tactical-plays');
 });

@@ -1,11 +1,14 @@
 import React, { useRef, useEffect } from 'react';
 import gsap from 'gsap';
+import { Line, Rect, Circle, Arc } from 'react-konva';
 
 interface FieldProps {
   onPositionClick: (x: number, y: number) => void;
+  width: number;
+  height: number;
 }
 
-const Field: React.FC<FieldProps> = ({ onPositionClick }) => {
+const Field: React.FC<FieldProps> = ({ onPositionClick, width, height }) => {
   const fieldRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -29,113 +32,179 @@ const Field: React.FC<FieldProps> = ({ onPositionClick }) => {
     }
   };
 
+  // Colores del campo
+  const FIELD_COLOR = '#2E7D32';
+  const LINE_COLOR = '#FFFFFF';
+  const LINE_WIDTH = 2;
+
+  // Dimensiones relativas del campo
+  const fieldWidth = width * 0.9;
+  const fieldHeight = (fieldWidth * 2) / 3; // Proporción FIFA estándar
+  const startX = (width - fieldWidth) / 2;
+  const startY = (height - fieldHeight) / 2;
+
+  // Áreas
+  const penaltyAreaWidth = fieldWidth * 0.16;
+  const penaltyAreaHeight = fieldHeight * 0.44;
+  const goalAreaWidth = fieldWidth * 0.06;
+  const goalAreaHeight = fieldHeight * 0.2;
+
+  // Círculo central y punto central
+  const centerCircleRadius = fieldHeight * 0.1;
+  const centerPointRadius = 3;
+
+  // Puntos de penalti
+  const penaltySpotDistance = fieldWidth * 0.11;
+  const penaltySpotRadius = 2;
+
+  // Arcos de esquina
+  const cornerRadius = fieldHeight * 0.02;
+
   return (
     <svg
       ref={fieldRef}
       className="w-full h-full"
-      viewBox="0 0 100 100"
+      viewBox={`0 0 ${width} ${height}`}
       onClick={handleClick}
     >
       {/* Campo principal */}
-      <rect
-        x="0"
-        y="0"
-        width="100"
-        height="100"
-        fill="#0A2342"
-        stroke="#DAA520"
-        strokeWidth="0.5"
+      <Rect
+        x={startX}
+        y={startY}
+        width={fieldWidth}
+        height={fieldHeight}
+        fill={FIELD_COLOR}
+        stroke={LINE_COLOR}
+        strokeWidth={LINE_WIDTH}
       />
 
       {/* Línea central */}
-      <line
-        x1="50"
-        y1="0"
-        x2="50"
-        y2="100"
-        stroke="#DAA520"
-        strokeWidth="0.3"
+      <Line
+        points={[
+          width / 2,
+          startY,
+          width / 2,
+          startY + fieldHeight
+        ]}
+        stroke={LINE_COLOR}
+        strokeWidth={LINE_WIDTH}
       />
 
       {/* Círculo central */}
-      <circle
-        cx="50"
-        cy="50"
-        r="10"
-        fill="none"
-        stroke="#DAA520"
-        strokeWidth="0.3"
+      <Circle
+        x={width / 2}
+        y={startY + fieldHeight / 2}
+        radius={centerCircleRadius}
+        stroke={LINE_COLOR}
+        strokeWidth={LINE_WIDTH}
       />
 
-      {/* Áreas de penalti */}
-      {/* Área izquierda */}
-      <rect
-        x="0"
-        y="30"
-        width="16"
-        height="40"
-        fill="none"
-        stroke="#DAA520"
-        strokeWidth="0.3"
-      />
-      <rect
-        x="0"
-        y="35"
-        width="5"
-        height="30"
-        fill="none"
-        stroke="#DAA520"
-        strokeWidth="0.3"
+      {/* Punto central */}
+      <Circle
+        x={width / 2}
+        y={startY + fieldHeight / 2}
+        radius={centerPointRadius}
+        fill={LINE_COLOR}
       />
 
-      {/* Área derecha */}
-      <rect
-        x="84"
-        y="30"
-        width="16"
-        height="40"
-        fill="none"
-        stroke="#DAA520"
-        strokeWidth="0.3"
-      />
-      <rect
-        x="95"
-        y="35"
-        width="5"
-        height="30"
-        fill="none"
-        stroke="#DAA520"
-        strokeWidth="0.3"
+      {/* Área de penalti izquierda */}
+      <Rect
+        x={startX}
+        y={startY + (fieldHeight - penaltyAreaHeight) / 2}
+        width={penaltyAreaWidth}
+        height={penaltyAreaHeight}
+        stroke={LINE_COLOR}
+        strokeWidth={LINE_WIDTH}
       />
 
-      {/* Puntos de penalti */}
-      <circle cx="11" cy="50" r="0.5" fill="#DAA520" />
-      <circle cx="89" cy="50" r="0.5" fill="#DAA520" />
+      {/* Área pequeña izquierda */}
+      <Rect
+        x={startX}
+        y={startY + (fieldHeight - goalAreaHeight) / 2}
+        width={goalAreaWidth}
+        height={goalAreaHeight}
+        stroke={LINE_COLOR}
+        strokeWidth={LINE_WIDTH}
+      />
 
-      {/* Esquinas */}
-      <path
-        d="M 0,0 A 3,3 0 0,1 3,3"
-        fill="none"
-        stroke="#DAA520"
-        strokeWidth="0.3"
+      {/* Punto de penalti izquierdo */}
+      <Circle
+        x={startX + penaltySpotDistance}
+        y={startY + fieldHeight / 2}
+        radius={penaltySpotRadius}
+        fill={LINE_COLOR}
       />
-      <path
-        d="M 100,0 A 3,3 0 0,0 97,3"
-        fill="none"
-        stroke="#DAA520"
-        strokeWidth="0.3"
+
+      {/* Área de penalti derecha */}
+      <Rect
+        x={startX + fieldWidth - penaltyAreaWidth}
+        y={startY + (fieldHeight - penaltyAreaHeight) / 2}
+        width={penaltyAreaWidth}
+        height={penaltyAreaHeight}
+        stroke={LINE_COLOR}
+        strokeWidth={LINE_WIDTH}
       />
-      <path
-        d="M 0,100 A 3,3 0 0,0 3,97"
-        fill="none"
-        stroke="#DAA520"
-        strokeWidth="0.3"
+
+      {/* Área pequeña derecha */}
+      <Rect
+        x={startX + fieldWidth - goalAreaWidth}
+        y={startY + (fieldHeight - goalAreaHeight) / 2}
+        width={goalAreaWidth}
+        height={goalAreaHeight}
+        stroke={LINE_COLOR}
+        strokeWidth={LINE_WIDTH}
       />
-      <path
-        d="M 100,100 A 3,3 0 0,1 97,97"
-        fill="none"
-        stroke="#DAA520"
-        strokeWidth="0.3"
+
+      {/* Punto de penalti derecho */}
+      <Circle
+        x={startX + fieldWidth - penaltySpotDistance}
+        y={startY + fieldHeight / 2}
+        radius={penaltySpotRadius}
+        fill={LINE_COLOR}
+      />
+
+      {/* Arcos de esquina */}
+      {[
+        [startX, startY],
+        [startX + fieldWidth, startY],
+        [startX, startY + fieldHeight],
+        [startX + fieldWidth, startY + fieldHeight]
+      ].map(([x, y], i) => (
+        <Arc
+          key={i}
+          x={x}
+          y={y}
+          angle={90}
+          rotation={i * 90}
+          innerRadius={cornerRadius}
+          outerRadius={cornerRadius}
+          stroke={LINE_COLOR}
+          strokeWidth={LINE_WIDTH}
+        />
+      ))}
+
+      {/* Semicírculo área penal izquierda */}
+      <Arc
+        x={startX + penaltySpotDistance}
+        y={startY + fieldHeight / 2}
+        angle={120}
+        rotation={-60}
+        innerRadius={centerCircleRadius}
+        outerRadius={centerCircleRadius}
+        stroke={LINE_COLOR}
+        strokeWidth={LINE_WIDTH}
+      />
+
+      {/* Semicírculo área penal derecha */}
+      <Arc
+        x={startX + fieldWidth - penaltySpotDistance}
+        y={startY + fieldHeight / 2}
+        angle={120}
+        rotation={120}
+        innerRadius={centerCircleRadius}
+        outerRadius={centerCircleRadius}
+        stroke={LINE_COLOR}
+        strokeWidth={LINE_WIDTH}
       />
     </svg>
   );
