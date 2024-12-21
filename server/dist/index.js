@@ -5,7 +5,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
+const path_1 = __importDefault(require("path"));
 const aiRoutes_1 = __importDefault(require("./routes/aiRoutes"));
+const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
+const teamRoutes_1 = __importDefault(require("./routes/teamRoutes"));
+const playerRoutes_1 = __importDefault(require("./routes/playerRoutes"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -20,6 +24,8 @@ app.use((req, res, next) => {
 app.use((0, cors_1.default)());
 // Body parser
 app.use(express_1.default.json());
+// Servir archivos estáticos
+app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '../uploads')));
 // Health check endpoint
 app.get('/', (_req, res) => {
     res.json({
@@ -33,6 +39,10 @@ app.get('/test', (_req, res) => {
 });
 // AI routes
 app.use('/api', aiRoutes_1.default);
+// Autenticación y equipos routes
+app.use('/api/auth', authRoutes_1.default);
+app.use('/api/teams', teamRoutes_1.default);
+app.use('/api/players', playerRoutes_1.default);
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('[ERROR]', err);

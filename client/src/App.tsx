@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Container, CssBaseline, ThemeProvider, createTheme, AppBar, Toolbar, Typography, Box } from '@mui/material';
-import TacticalBoard from './components/TacticalBoard';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import Layout from './components/Layout';
+import Dashboard from './components/dashboard/Dashboard';
 import CoachAI from './components/CoachAI';
-import LanguageSelector from './components/LanguageSelector';
+import TacticalBoard from './components/TacticalBoard';
+import AuthLayout from './components/auth/AuthLayout';
 
 const theme = createTheme({
   palette: {
@@ -36,45 +37,71 @@ const theme = createTheme({
 export type Language = 'en' | 'es' | 'fr';
 
 const App: React.FC = () => {
-  const [selectedLanguage, setSelectedLanguage] = useState<Language>('en');
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>(() => {
+    // Recuperar el idioma guardado en localStorage o usar 'es' como predeterminado
+    const savedLanguage = localStorage.getItem('preferredLanguage');
+    return (savedLanguage as Language) || 'es';
+  });
 
-  const getTitle = () => {
-    switch (selectedLanguage) {
-      case 'es':
-        return 'Analizador Táctico de Fútbol';
-      case 'fr':
-        return 'Analyseur Tactique de Football';
-      default:
-        return 'Tactical Football Analyzer';
+  // Verificar si el usuario está autenticado
+  const isAuthenticated = () => {
+    return !!localStorage.getItem('token');
+  };
+
+  // Actualizar localStorage cuando cambie el idioma
+  useEffect(() => {
+    localStorage.setItem('preferredLanguage', selectedLanguage);
+  }, [selectedLanguage]);
+
+  // Componente para proteger rutas
+  const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+    if (!isAuthenticated()) {
+      return <Navigate to="/auth" replace />;
     }
+    return <>{children}</>;
   };
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ flexGrow: 1 }}>
-        <AppBar position="static" color="primary">
-          <Toolbar>
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              {getTitle()}
-            </Typography>
-            <LanguageSelector
-              selectedLanguage={selectedLanguage}
-              onLanguageChange={setSelectedLanguage}
+      <BrowserRouter>
+        <Routes>
+          {/* Ruta pública de autenticación */}
+          <Route
+            path="/auth"
+            element={
+              <AuthLayout
+                selectedLanguage={selectedLanguage}
+                setSelectedLanguage={setSelectedLanguage}
+              />
+            }
+          />
+
+          {/* Todas las demás rutas protegidas */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Layout
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
+                />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/coach-ai" replace />} />
+            <Route
+              path="/coach-ai"
+              element={<CoachAI selectedLanguage={selectedLanguage} />}
             />
-          </Toolbar>
-        </AppBar>
-        <BrowserRouter>
-          <Container maxWidth={false} sx={{ height: '100vh', p: 2, mt: 4 }}>
-            <Routes>
-              <Route element={<Layout />}>
-                <Route path="/" element={<CoachAI selectedLanguage={selectedLanguage} />} />
-                <Route path="/board" element={<TacticalBoard />} />
-              </Route>
-            </Routes>
-          </Container>
-        </BrowserRouter>
-      </Box>
+            <Route path="/tactical-board" element={<TacticalBoard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+          </Route>
+
+          {/* Redirigir cualquier otra ruta a /auth */}
+          <Route path="*" element={<Navigate to="/auth" replace />} />
+        </Routes>
+      </BrowserRouter>
     </ThemeProvider>
   );
 };

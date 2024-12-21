@@ -1,39 +1,83 @@
 import React from 'react';
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
-import { SportsSoccer, SportsScore } from '@mui/icons-material';
+import LanguageSelector from './LanguageSelector';
 
-const Layout: React.FC = () => {
+interface LayoutProps {
+  selectedLanguage: string;
+  setSelectedLanguage: (language: string) => void;
+}
+
+const Layout: React.FC<LayoutProps> = ({ selectedLanguage, setSelectedLanguage }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/auth');
+  };
+
+  const getTitle = () => {
+    const location = useLocation();
+    switch (location.pathname) {
+      case '/coach-ai':
+        return 'Coach AI';
+      case '/tactical-board':
+        return 'Tactical Board';
+      case '/dashboard':
+        return 'Dashboard';
+      default:
+        return 'Tactical Football Analyzer';
+    }
+  };
+
   return (
-    <>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <AppBar position="static" sx={{ mb: 3 }}>
         <Toolbar>
-          <SportsSoccer sx={{ mr: 2 }} />
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Tactical Football Analyzer
+            {getTitle()}
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Button
               color="inherit"
               component={Link}
-              to="/"
-              startIcon={<SportsSoccer />}
+              to="/coach-ai"
             >
               Coach AI
             </Button>
             <Button
               color="inherit"
               component={Link}
-              to="/board"
-              startIcon={<SportsScore />}
+              to="/tactical-board"
             >
               Tactical Board
             </Button>
+            <Button
+              color="inherit"
+              component={Link}
+              to="/dashboard"
+            >
+              Dashboard
+            </Button>
+            <Button
+              color="inherit"
+              onClick={handleLogout}
+            >
+              Cerrar Sesión
+            </Button>
+            <LanguageSelector
+              selectedLanguage={selectedLanguage}
+              setSelectedLanguage={setSelectedLanguage}
+            />
           </Box>
         </Toolbar>
       </AppBar>
-      <Outlet />
-    </>
+      <Box component="main" sx={{ flexGrow: 1, px: 3 }}>
+        <Outlet />
+      </Box>
+    </Box>
   );
 };
 

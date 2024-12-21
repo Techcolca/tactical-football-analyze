@@ -1,0 +1,69 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Club {
+  id        String   @id @default(uuid())
+  name      String
+  logo      String?
+  country   String
+  city      String
+  coaches   Coach[]
+  teams     Team[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("clubs")
+}
+
+model Coach {
+  id           String   @id @default(uuid())
+  clubId       String
+  firstName    String
+  lastName     String
+  email        String   @unique
+  passwordHash String
+  role         String   // HEAD_COACH, ASSISTANT_COACH, YOUTH_COACH
+  club         Club     @relation(fields: [clubId], references: [id])
+  teams        Team[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("coaches")
+}
+
+model Team {
+  id        String   @id @default(uuid())
+  clubId    String
+  coachId   String
+  name      String
+  category  String   // FIRST_TEAM, RESERVES, U19, U17, U15
+  season    String
+  club      Club     @relation(fields: [clubId], references: [id])
+  coach     Coach    @relation(fields: [coachId], references: [id])
+  players   Player[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("teams")
+}
+
+model Player {
+  id        String   @id @default(uuid())
+  teamId    String
+  firstName String
+  lastName  String
+  number    Int
+  position  String
+  photoUrl  String?
+  team      Team     @relation(fields: [teamId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("players")
+}

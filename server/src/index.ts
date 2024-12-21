@@ -1,6 +1,10 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import aiRoutes from './routes/aiRoutes';
+import authRoutes from './routes/authRoutes';
+import teamRoutes from './routes/teamRoutes';
+import playerRoutes from './routes/playerRoutes';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -21,6 +25,9 @@ app.use(cors());
 // Body parser
 app.use(express.json());
 
+// Servir archivos estáticos
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Health check endpoint
 app.get('/', (_req, res) => {
   res.json({ 
@@ -36,6 +43,11 @@ app.get('/test', (_req, res) => {
 
 // AI routes
 app.use('/api', aiRoutes);
+
+// Autenticación y equipos routes
+app.use('/api/auth', authRoutes);
+app.use('/api/teams', teamRoutes);
+app.use('/api/players', playerRoutes);
 
 // Error handling middleware
 app.use((err: any, req: any, res: any, next: any) => {
