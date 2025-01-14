@@ -22,9 +22,67 @@ import {
   Pause,
   Stop,
 } from '@mui/icons-material';
-import { Stage, Layer, Circle, Arrow, Line, Group } from 'react-konva';
+import { Stage, Layer, Circle, Arrow, Line, Group, Text } from 'react-konva';
 import { Formation } from '../../types/collaboration';
 import { IPlayer } from '../../types/player';
+import styles from './TacticalBoard.module.css';
+import soccerField from '../../assets/soccer-field.png';
+
+// Definir las posiciones predefinidas para cada formación
+const FORMATION_POSITIONS = {
+  '4-4-2': [
+    { x: 0.5, y: 0.1 },  // GK
+    { x: 0.2, y: 0.3 },  // DEF
+    { x: 0.4, y: 0.3 },  // DEF
+    { x: 0.6, y: 0.3 },  // DEF
+    { x: 0.8, y: 0.3 },  // DEF
+    { x: 0.2, y: 0.6 },  // MID
+    { x: 0.4, y: 0.6 },  // MID
+    { x: 0.6, y: 0.6 },  // MID
+    { x: 0.8, y: 0.6 },  // MID
+    { x: 0.35, y: 0.8 }, // FWD
+    { x: 0.65, y: 0.8 }, // FWD
+  ],
+  '4-3-3': [
+    { x: 0.5, y: 0.1 },  // GK
+    { x: 0.2, y: 0.3 },  // DEF
+    { x: 0.4, y: 0.3 },  // DEF
+    { x: 0.6, y: 0.3 },  // DEF
+    { x: 0.8, y: 0.3 },  // DEF
+    { x: 0.3, y: 0.6 },  // MID
+    { x: 0.5, y: 0.6 },  // MID
+    { x: 0.7, y: 0.6 },  // MID
+    { x: 0.3, y: 0.8 },  // FWD
+    { x: 0.5, y: 0.8 },  // FWD
+    { x: 0.7, y: 0.8 },  // FWD
+  ],
+  '3-5-2': [
+    { x: 0.5, y: 0.1 },  // GK
+    { x: 0.3, y: 0.3 },  // DEF
+    { x: 0.5, y: 0.3 },  // DEF
+    { x: 0.7, y: 0.3 },  // DEF
+    { x: 0.2, y: 0.6 },  // MID
+    { x: 0.35, y: 0.6 }, // MID
+    { x: 0.5, y: 0.6 },  // MID
+    { x: 0.65, y: 0.6 }, // MID
+    { x: 0.8, y: 0.6 },  // MID
+    { x: 0.35, y: 0.8 }, // FWD
+    { x: 0.65, y: 0.8 }, // FWD
+  ],
+  '5-3-2': [
+    { x: 0.5, y: 0.1 },  // GK
+    { x: 0.1, y: 0.3 },  // DEF
+    { x: 0.3, y: 0.3 },  // DEF
+    { x: 0.5, y: 0.3 },  // DEF
+    { x: 0.7, y: 0.3 },  // DEF
+    { x: 0.9, y: 0.3 },  // DEF
+    { x: 0.3, y: 0.6 },  // MID
+    { x: 0.5, y: 0.6 },  // MID
+    { x: 0.7, y: 0.6 },  // MID
+    { x: 0.35, y: 0.8 }, // FWD
+    { x: 0.65, y: 0.8 }, // FWD
+  ],
+};
 
 interface TacticalBoardProps {
   formation: Formation;
@@ -83,6 +141,18 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({
     }
   }, [formation, players]);
 
+  const calculateFormationPositions = (
+    formation: Formation,
+    boardWidth: number,
+    boardHeight: number
+  ) => {
+    const positions = FORMATION_POSITIONS[formation] || [];
+    return positions.map(pos => ({
+      x: pos.x * boardWidth,
+      y: pos.y * boardHeight
+    }));
+  };
+
   const generateInitialPositions = (
     formation: Formation,
     players: IPlayer[],
@@ -105,15 +175,6 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({
     });
 
     return markers;
-  };
-
-  const calculateFormationPositions = (
-    formation: Formation,
-    boardWidth: number,
-    boardHeight: number
-  ) => {
-    // Implementar cálculo de posiciones según la formación
-    return [];
   };
 
   const getPlayerColor = (position: string): string => {
@@ -192,31 +253,7 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({
     setHistoryIndex(newHistory.length - 1);
   };
 
-  const undo = () => {
-    if (historyIndex > 0) {
-      setHistoryIndex(historyIndex - 1);
-      const previousState = history[historyIndex - 1];
-      restoreState(previousState);
-    }
-  };
-
-  const redo = () => {
-    if (historyIndex < history.length - 1) {
-      setHistoryIndex(historyIndex + 1);
-      const nextState = history[historyIndex + 1];
-      restoreState(nextState);
-    }
-  };
-
-  const restoreState = (state: Play) => {
-    setPlayerMarkers(state.players);
-    setMovements(state.movements);
-    if (state.ballMovement) {
-      setBallPosition({ x: state.ballMovement[0], y: state.ballMovement[1] });
-    }
-  };
-
-  const clearBoard = () => {
+  const handleClear = () => {
     setPlayerMarkers([]);
     setMovements([]);
     setBallPosition(null);
@@ -224,7 +261,7 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({
     addToHistory();
   };
 
-  const savePlay = () => {
+  const handleSave = () => {
     if (onSavePlay) {
       const play: Play = {
         name: `Play ${history.length}`,
@@ -237,167 +274,168 @@ const TacticalBoard: React.FC<TacticalBoardProps> = ({
     }
   };
 
-  const playAnimation = () => {
-    setIsPlaying(true);
-    // Implementar animación de la jugada
-  };
-
-  const pauseAnimation = () => {
-    setIsPlaying(false);
-  };
-
-  const stopAnimation = () => {
-    setIsPlaying(false);
-    // Restaurar posiciones iniciales
-  };
-
-  const actions = [
-    { icon: <Person />, name: 'Add Player', action: () => setSelectedTool('player') },
-    { icon: <SportsSoccer />, name: 'Add Ball', action: () => setSelectedTool('ball') },
-    { icon: <Timeline />, name: 'Add Movement', action: () => setSelectedTool('movement') },
-    { icon: <Clear />, name: 'Clear', action: clearBoard },
-    { icon: <Save />, name: 'Save', action: savePlay },
-  ];
-
   return (
-    <Paper
-      elevation={3}
-      sx={{
-        position: 'relative',
-        width: width,
-        height: height,
-        bgcolor: '#2c5530', // Color verde campo de fútbol
-        overflow: 'hidden',
+    <Paper 
+      elevation={3} 
+      sx={{ 
+        p: 2,
+        backgroundColor: 'background.paper',
+        width: width + 40,
+        height: height + 40,
       }}
     >
-      <Box position="absolute" top={16} right={16} zIndex={1}>
-        <IconButton onClick={undo} disabled={historyIndex <= 0}>
-          <Undo />
-        </IconButton>
-        <IconButton onClick={redo} disabled={historyIndex >= history.length - 1}>
-          <Redo />
-        </IconButton>
-        {!readOnly && (
-          <>
-            <IconButton onClick={playAnimation} disabled={isPlaying}>
-              <PlayArrow />
-            </IconButton>
-            <IconButton onClick={pauseAnimation} disabled={!isPlaying}>
-              <Pause />
-            </IconButton>
-            <IconButton onClick={stopAnimation}>
-              <Stop />
-            </IconButton>
-          </>
-        )}
-      </Box>
-
-      <Stage
-        width={width}
-        height={height}
-        ref={stageRef}
-        onClick={handleStageClick}
+      <div 
+        style={{
+          width: width,
+          height: height,
+          position: 'relative',
+          borderRadius: '4px',
+          overflow: 'hidden',
+        }}
       >
-        <Layer>
-          {/* Campo de fútbol */}
-          <Line
-            points={[0, height/2, width, height/2]}
-            stroke="white"
-            strokeWidth={2}
-          />
-          <Circle
-            x={width/2}
-            y={height/2}
-            radius={50}
-            stroke="white"
-            strokeWidth={2}
-          />
-          {/* Áreas de penalti */}
-          <Line
-            points={[0, height/4, width/6, height/4, width/6, height*3/4, 0, height*3/4]}
-            stroke="white"
-            strokeWidth={2}
-          />
-          <Line
-            points={[width, height/4, width*5/6, height/4, width*5/6, height*3/4, width, height*3/4]}
-            stroke="white"
-            strokeWidth={2}
-          />
-
-          {/* Jugadores */}
-          {playerMarkers.map((marker) => (
-            <Group
-              key={marker.id}
-              x={marker.x}
-              y={marker.y}
-              draggable={!readOnly}
-              onDragEnd={(e) => handleDragEnd(e, marker.id)}
-            >
-              <Circle
-                radius={15}
-                fill={marker.color}
-                stroke="white"
-                strokeWidth={2}
-              />
-              {marker.player && (
-                <Circle
-                  radius={5}
-                  fill="white"
-                  y={-20}
-                />
-              )}
-            </Group>
-          ))}
-
-          {/* Balón */}
-          {ballPosition && (
-            <Circle
-              x={ballPosition.x}
-              y={ballPosition.y}
-              radius={8}
-              fill="white"
-              draggable={!readOnly}
-            />
-          )}
-
-          {/* Movimientos */}
-          {movements.map((movement, i) => (
-            <Arrow
-              key={i}
-              points={movement.points}
-              stroke={theme.palette.secondary.main}
-              strokeWidth={2}
-              fill={theme.palette.secondary.main}
-            />
-          ))}
-
-          {/* Movimiento actual */}
-          {currentMovement.length > 0 && (
-            <Line
-              points={currentMovement}
-              stroke={theme.palette.secondary.main}
-              strokeWidth={2}
-            />
-          )}
-        </Layer>
-      </Stage>
-
-      {!readOnly && (
-        <SpeedDial
-          ariaLabel="Tactical Board Tools"
-          sx={{ position: 'absolute', bottom: 16, right: 16 }}
-          icon={<SpeedDialIcon />}
+        <img
+          src={soccerField}
+          alt="Soccer Field"
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            zIndex: 0,
+          }}
+        />
+        <Stage
+          width={width}
+          height={height}
+          ref={stageRef}
+          onClick={handleStageClick}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            zIndex: 1,
+          }}
         >
-          {actions.map((action) => (
+          <Layer>
+            {/* Jugadores */}
+            {playerMarkers.map((marker, index) => (
+              <Group
+                key={marker.id}
+                x={marker.x}
+                y={marker.y}
+                draggable={!readOnly}
+                onDragEnd={(e) => handleDragEnd(e, marker.id)}
+              >
+                <Circle
+                  radius={15}
+                  fill={marker.color}
+                  stroke="#000"
+                  strokeWidth={2}
+                  shadowColor="#000"
+                  shadowBlur={5}
+                  shadowOffset={{ x: 2, y: 2 }}
+                  shadowOpacity={0.3}
+                />
+                <Text
+                  text={marker.player?.number?.toString() || (index + 1).toString()}
+                  fill="#fff"
+                  fontSize={12}
+                  fontStyle="bold"
+                  align="center"
+                  verticalAlign="middle"
+                  width={30}
+                  height={30}
+                  offsetX={15}
+                  offsetY={15}
+                />
+              </Group>
+            ))}
+
+            {/* Pelota */}
+            {ballPosition && (
+              <Circle
+                x={ballPosition.x}
+                y={ballPosition.y}
+                radius={8}
+                fill="#fff"
+                stroke="#000"
+                strokeWidth={2}
+                shadowColor="#000"
+                shadowBlur={5}
+                shadowOffset={{ x: 2, y: 2 }}
+                shadowOpacity={0.3}
+                draggable={!readOnly}
+              />
+            )}
+
+            {/* Movimientos */}
+            {movements.map((movement, index) => (
+              <Arrow
+                key={`movement-${index}`}
+                points={movement.points}
+                stroke="#fff"
+                fill="#fff"
+                strokeWidth={3}
+                shadowColor="#000"
+                shadowBlur={5}
+                shadowOffset={{ x: 2, y: 2 }}
+                shadowOpacity={0.3}
+              />
+            ))}
+
+            {/* Movimiento actual */}
+            {currentMovement.length >= 4 && (
+              <Arrow
+                points={currentMovement}
+                stroke="#fff"
+                fill="#fff"
+                strokeWidth={3}
+                shadowColor="#000"
+                shadowBlur={5}
+                shadowOffset={{ x: 2, y: 2 }}
+                shadowOpacity={0.3}
+              />
+            )}
+          </Layer>
+        </Stage>
+      </div>
+
+      {/* Controles */}
+      <Box sx={{ position: 'absolute', right: 16, bottom: 16 }}>
+        <SpeedDial
+          ariaLabel="Tactical Board Controls"
+          icon={<SpeedDialIcon />}
+          direction="up"
+        >
+          <SpeedDialAction
+            icon={<Person />}
+            tooltipTitle="Add Player"
+            onClick={() => setSelectedTool('player')}
+          />
+          <SpeedDialAction
+            icon={<SportsSoccer />}
+            tooltipTitle="Add Ball"
+            onClick={() => setSelectedTool('ball')}
+          />
+          <SpeedDialAction
+            icon={<Timeline />}
+            tooltipTitle="Draw Movement"
+            onClick={() => setSelectedTool('movement')}
+          />
+          <SpeedDialAction
+            icon={<Clear />}
+            tooltipTitle="Clear"
+            onClick={handleClear}
+          />
+          {onSavePlay && (
             <SpeedDialAction
-              key={action.name}
-              icon={action.icon}
-              tooltipTitle={action.name}
-              onClick={action.action}
+              icon={<Save />}
+              tooltipTitle="Save Play"
+              onClick={handleSave}
             />
-          ))}
+          )}
         </SpeedDial>
-      )}
+      </Box>
     </Paper>
   );
 };
